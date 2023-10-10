@@ -21,7 +21,6 @@ app.post("/refresh", async (req, res) => {
 });
 app.post("/login", async (req, res) => {
     const { username, password } = req.body;
-    console.log(username, password);
     const user = await User.get({ username });
     if (!user) return res.status(401).json({ message: "Invalid username or password" });
     const responseToken = User.generateToken(user);
