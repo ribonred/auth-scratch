@@ -1,7 +1,7 @@
 
+const {UserMongo} = require('./UserMongo');
 exports.attachPerm = async (user, perm) => {
-    user.permissions.push(perm);
-    await user.save();
+    await UserMongo.findOneAndUpdate({ _id: user._id }, { $addToSet: { permissions: perm } });
 };
 exports.detachPerm = async (user, perm) => {
     user.permissions.pull(perm);

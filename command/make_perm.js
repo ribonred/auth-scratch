@@ -23,17 +23,9 @@ const main = async () => {
         }
     ]
     try {
-        const writer = permissions.map((permission) =>
-        ({
-            updateOne: {
-                filter: { name: permission.name },
-                update: { $set: permission },
-                upsert: true,
-                setDefaultsOnInsert: true
-            }
-        })
-        )
-        await PermissionMongo.bulkWrite(writer);
+        for (let perm of permissions) {
+            await PermissionMongo.create(perm);
+        }
 
     } catch (e) {
         console.log(e);

@@ -2,6 +2,8 @@ const express = require('express');
 const app = express();
 const applyMiddleware = require('./middleware');
 const User = require('./models/User');
+const { attachPerm, detachPerm } = require('./models/permissions_utils');
+const { PermissionMongo } = require('./models/UserMongo');
 const permissons = require('./permission');
 const mongoose = require("mongoose");
 require('dotenv').config()
@@ -15,6 +17,13 @@ applyMiddleware(app);
 
 app.get('/', (req, res) => {
     res.send('Hello World!');
+});
+app.post("/attachperm", async (req, res) => {
+    const { username, permission } = req.body;
+    const perm = await PermissionMongo.findOne({ name: permission });
+    const user = await User.get({ username });
+    await attachPerm(user, perm);
+    res.json({message: "success"});
 });
 app.post("/refresh", async (req, res) => {
     const { refreshToken } = req.body;
