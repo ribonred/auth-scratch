@@ -4,8 +4,11 @@ const applyMiddleware = require('./middleware');
 const User = require('./models/User');
 const { attachPerm, detachPerm } = require('./models/permissions_utils');
 const { PermissionMongo } = require('./models/UserMongo');
+const postrouter = require('./router/post');
+const controller = require('./controller/usercontroller');
 const permissons = require('./permission');
 const mongoose = require("mongoose");
+const { loginLimiter } = require('./middleware/ratelimit')
 require('dotenv').config()
 
 mongoose.connect(process.env.MONGO_URL).then(() => console.log("Successfully connect to MongoDB."))
@@ -18,12 +21,22 @@ applyMiddleware(app);
 app.get('/', (req, res) => {
     res.send('Hello World!');
 });
+app.use("/post", postrouter);
+app.post("/requestreset", controller.passwordResetRequest);
+app.post("/reset", controller.passwordReset);
+app.post("/detachperm", async (req, res) => {
+    const { username, permission } = req.body;
+    const perm = await PermissionMongo.findOne({ name: permission });
+    const user = await User.get({ username });
+    await detachPerm(user, perm);
+    res.json({ message: "success" });
+});
 app.post("/attachperm", async (req, res) => {
     const { username, permission } = req.body;
     const perm = await PermissionMongo.findOne({ name: permission });
     const user = await User.get({ username });
     await attachPerm(user, perm);
-    res.json({message: "success"});
+    res.json({ message: "success" });
 });
 app.post("/refresh", async (req, res) => {
     const { refreshToken } = req.body;
@@ -32,25 +45,33 @@ app.post("/refresh", async (req, res) => {
     const responseToken = User.generateToken(user);
     res.json(responseToken);
 });
-app.post("/login", async (req, res) => {
+app.post("/login", loginLimiter, async (req, res) => {
     const { username, password } = req.body;
-    const is_authenticated = await User.authenticate(username, password);
     const user = await User.get({ username });
-    if (!is_authenticated) return res.status(401).json({ message: "Invalid username or password" });
+    const is_authenticated = await User.authenticate(username, password);
+    if (!user || !is_authenticated) {
+        res.status(401).json({ error: "Invalid username or password" });
+        return;
+    }
     const responseToken = User.generateToken(user);
     res.json(responseToken);
 });
+
+// create a user
 app.post('/user', async (req, res) => {
     const { username, email, password } = req.body;
     const user = await User.create({ username, email, password });
     const responseToken = User.generateToken(user);
     res.status(201).json(responseToken);
 });
-// authorization
+// get user info
 app.get("/user", permissons.is_authenticated, async (req, res) => {
     const user = req.user;
-    console.log(user.is_superuser());
-    console.log(user.is_staff());
+    res.json(user);
+});
+// get protected admin user
+app.get("/adminuser", permissons.is_superuser, async (req, res) => {
+    const user = req.user;
     res.json(user);
 });
 
