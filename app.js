@@ -19,6 +19,8 @@ applyMiddleware(app);
 
 
 app.get('/', (req, res) => {
+    console.log(req.cookies, "COOKIES");
+    console.log(req.user , "<============= USER");
     res.send('Hello World!');
 });
 app.use("/post", postrouter);
@@ -56,11 +58,23 @@ app.post("/login", loginLimiter, async (req, res) => {
     const responseToken = User.generateToken(user);
     res.json(responseToken);
 });
+// session login
+
+app.post("/login_session", controller.login_session);
+app.post("/logout_session", controller.logout_session);
+
+
+
+
+
+
 
 // create a user
 app.post('/user', async (req, res) => {
     const { username, email, password } = req.body;
     const user = await User.create({ username, email, password });
+    const userPerm = await PermissionMongo.findOne({ name: "user" });
+    await attachPerm(user, userPerm);
     const responseToken = User.generateToken(user);
     res.status(201).json(responseToken);
 });
