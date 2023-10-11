@@ -19,11 +19,17 @@ exports.UserMongo = model("User", new Schema({
 
 }, {
     methods: {
+        // usage user.has_perm("superuser")
         has_perm(name) {
             return this.permissions.filter((perm) => perm.name === name).length > 0;
         },
+        // usage user.is_superuser()
         is_superuser() {
             return this.has_perm("superuser");
+        },
+        // usage user.is_staff()
+        is_staff() {
+            return this.has_perm("staff");
         }
     }
 }));

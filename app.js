@@ -40,6 +40,8 @@ app.post('/user', async (req, res) => {
 // authorization
 app.get("/user", permissons.is_authenticated, async (req, res) => {
     const user = req.user;
+    console.log(user.is_superuser());
+    console.log(user.is_staff());
     res.json(user);
 });
 
