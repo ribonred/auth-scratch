@@ -11,10 +11,8 @@ class JWTAuth extends BaseAuth {
             const token = authHeader.split(" ")[1];
             if (token) {
                 const _user = await User.parseTokenSafe(token);
-                console.log(_user);
                 if (!_user) return null;
-                const user = this.exclude(_user, ["password"]); // skip
-                return user;
+                return _user;
             }
         }
         return null;
