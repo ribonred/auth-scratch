@@ -4,3 +4,6 @@ exports.is_authenticated = (req, res, next) => {
     }
     next();
 }
+// exports.is_superuser = (req, res, next) => {
+
+// }

@@ -3,7 +3,11 @@ const app = express();
 const applyMiddleware = require('./middleware');
 const User = require('./models/User');
 const permissons = require('./permission');
+const mongoose = require("mongoose");
+require('dotenv').config()
 
+mongoose.connect(process.env.MONGO_URL).then(() => console.log("Successfully connect to MongoDB."))
+    .catch(err => console.error("Connection error", err));
 
 applyMiddleware(app);
 
@@ -21,8 +25,9 @@ app.post("/refresh", async (req, res) => {
 });
 app.post("/login", async (req, res) => {
     const { username, password } = req.body;
+    const is_authenticated = await User.authenticate(username, password);
     const user = await User.get({ username });
-    if (!user) return res.status(401).json({ message: "Invalid username or password" });
+    if (!is_authenticated) return res.status(401).json({ message: "Invalid username or password" });
     const responseToken = User.generateToken(user);
     res.json(responseToken);
 });
